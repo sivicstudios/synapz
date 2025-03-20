@@ -1,28 +1,10 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
-
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Synapz</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}></button>
-        <p>On-chain game master</p>
-      </div>
-      <p className="read-the-docs"></p>
-    </>
+    <main className="relative w-screen min-h-screen bg-gradient-to-br from-zinc-900 via-neutral-900 to-slate-900 flex items-start mx-auto justify-center">
+      <div className="w-full h-full fixed z-[0] bg-[url('./assets/logo-bg.svg')] bg-repeat bg-center opacity-2"></div>
+      <div className="z-[1] absolute mx-auto w-full max-w-[600px] bg-[#1E1E1E] min-h-screen h-full border-l-2 border-r-2 border-dashed border-[#2D2D2D]"></div>
+    </main>
   );
 }
 
