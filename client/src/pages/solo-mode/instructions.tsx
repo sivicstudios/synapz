@@ -1,9 +1,7 @@
-import SelectMode from "../../components/SelectMode";
+import GameMasterScreenContainer from "../../components/GameMasterScreenContainer";
 
 export default function SoloModeInstructions() {
-  return (
-    <>
-      <SelectMode />
-    </>
-  );
-}
+    return <>
+    <GameMasterScreenContainer />
+    </>;
+  }
