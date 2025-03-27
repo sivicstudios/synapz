@@ -1,4 +1,9 @@
+import SelectMode from "../../components/solo-mode/SelectMode";
+
 export default function SoloModeSelectMode() {
-    return <>{/* Your code here */}</>;
-  }
-  
+  return (
+    <div className="container">
+      <SelectMode />
+    </div>
+  );
+}

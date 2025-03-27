@@ -1,7 +1,9 @@
-import GameMasterScreenContainer from "../../components/GameMasterScreenContainer";
+import GameMasterCountdown from "../../components/solo-mode/GameMasterCountdown";
 
 export default function SoloModeInstructions() {
-    return <>
-    <GameMasterScreenContainer />
-    </>;
-  }
+  return (
+    <div className="container">
+      <GameMasterCountdown />
+    </div>
+  );
+}
