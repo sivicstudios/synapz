@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+
+.text-border {
+    text-shadow: -2px -2px 0 #5D5D5D,
+                 2px -2px 0 #5D5D5D,
+                -2px  2px 0 #5D5D5D,
+                 2px  2px 0 #5D5D5D;
+  }
+  .bowlby-one{
+    font-family: "Bowlby One", sans-serif;
+  }
+  .ubuntu-sans{
+    font-family: "Ubuntu Sans", sans-serif;
+  }
