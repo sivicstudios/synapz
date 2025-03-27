@@ -1,4 +1,5 @@
-import "./App.css";
+import QuestionAnswer from './components/QuestionAnswer';
+import './App.css';
 function App() {
   return (
     <main className="relative w-screen min-h-screen bg-gradient-to-br from-zinc-900 via-neutral-900 to-slate-900 flex items-start mx-auto justify-center">
