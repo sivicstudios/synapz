@@ -21,28 +21,26 @@ const router = createBrowserRouter([
   {
     path: "/solo-mode",
     element: <SoloModeHome />,
-    children: [
-      {
-        path: "/solo-mode/home",
-        element: <SoloModeHome />,
-      },
-      {
-        path: "/solo-mode/game-master",
-        element: <SoloModeGameMaster />,
-      },
-      {
-        path: "/solo-mode/instructions",
-        element: <SoloModeInstructions />,
-      },
-      {
-        path: "/solo-mode/select-mode",
-        element: <SoloModeSelectMode />,
-      },
-      {
-        path: "/solo-mode/score",
-        element: <SoloModeScore />,
-      },
-    ],
+  },
+  {
+    path: "/solo-mode/home",
+    element: <SoloModeHome />,
+  },
+  {
+    path: "/solo-mode/game-master",
+    element: <SoloModeGameMaster />,
+  },
+  {
+    path: "/solo-mode/instructions",
+    element: <SoloModeInstructions />,
+  },
+  {
+    path: "/solo-mode/select-mode",
+    element: <SoloModeSelectMode />,
+  },
+  {
+    path: "/solo-mode/score",
+    element: <SoloModeScore />,
   },
 ]);
 

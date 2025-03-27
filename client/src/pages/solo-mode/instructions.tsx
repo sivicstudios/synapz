@@ -1,4 +1,9 @@
+import GameMasterCountdown from "../../components/solo-mode/GameMasterCountdown";
+
 export default function SoloModeInstructions() {
-    return <>{/* Your code here */}</>;
-  }
-  
+  return (
+    <div className="container">
+      <GameMasterCountdown />
+    </div>
+  );
+}

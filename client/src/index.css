@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+.container {
+    min-height: 100vh;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    color: #FFFFFF;
+    background-color: #313131;
+}
+
+.text-border {
+    text-shadow: -2px -2px 0 #5D5D5D,
+        2px -2px 0 #5D5D5D,
+        -2px 2px 0 #5D5D5D,
+        2px 2px 0 #5D5D5D;
+}
+
+.bowlby-one {
+    font-family: "Bowlby One", sans-serif;
+}
+
+.ubuntu-sans {
+    font-family: "Ubuntu Sans", sans-serif;
+}

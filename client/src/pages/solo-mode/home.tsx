@@ -1,4 +1,7 @@
+import Home from "../../components/solo-mode/Home";
+
 export default function SoloModeHome() {
-    return <>{/* Your code here */}</>;
-  }
-  
+  return <div className="container">
+    <Home />
+  </div>;
+}
