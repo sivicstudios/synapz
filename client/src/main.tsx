@@ -10,6 +10,7 @@ import SoloModeHome from "./pages/solo-mode/home.tsx";
 import SoloModeInstructions from "./pages/solo-mode/instructions.tsx";
 import SoloModeSelectMode from "./pages/solo-mode/select-mode.tsx";
 import SoloModeScore from "./pages/solo-mode/score.tsx";
+import SoloModeLevels from "./pages/solo-mode/levels.tsx";
 
 const router = createBrowserRouter([
   {
@@ -37,6 +38,10 @@ const router = createBrowserRouter([
   {
     path: "/solo-mode/select-mode",
     element: <SoloModeSelectMode />,
+  },
+  {
+    path: "/solo-mode/levels",
+    element: <SoloModeLevels />,
   },
   {
     path: "/solo-mode/score",
