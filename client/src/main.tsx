@@ -51,6 +51,11 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <main className="relative w-full min-h-screen h-full bg-gradient-to-br from-zinc-900 via-neutral-900 to-slate-900 flex items-center justify-center">
+      <div className="w-full h-full fixed z-0 bg-[url('./assets/logo-bg.svg')] bg-repeat bg-center opacity-5" />
+      <div className="container">
+        <RouterProvider router={router} />
+      </div>
+    </main>
   </React.StrictMode>
 );
