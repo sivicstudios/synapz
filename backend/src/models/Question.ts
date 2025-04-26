@@ -1,4 +1,4 @@
-import mongoose, {Document, Schema} from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IQuestion extends Document {
   game_id: string;
@@ -58,8 +58,5 @@ const QuestionSchema: Schema = new mongoose.Schema({
 }, {
   timestamps: true,
 });
-
-// const User = mongoose.model<IUser>("User", userSchema);
-// export default User;
 
 export const Question = mongoose.model<IQuestion>("Question", QuestionSchema);

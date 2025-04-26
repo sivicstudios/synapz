@@ -42,7 +42,7 @@ export class QuestionService {
     if (!Types.ObjectId.isValid(questionId)) {
       throw new BadRequestError('Invalid Question ID');
     }
-    const question = await Question.findById({ id: questionId});
+    const question = await Question.findById(questionId);
     if (!question) {
       throw new NotFoundError('Question not found');
     }

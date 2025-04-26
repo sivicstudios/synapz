@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 
 // Routes
 import userRoutes from './routes/userRoutes';
+import questionRoutes from './routes/questionRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -25,6 +26,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use('/api/users', userRoutes);
+app.use('/api/questions', questionRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
