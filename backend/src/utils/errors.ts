@@ -15,3 +15,4 @@ export class BadRequestError extends Error {
     this.statusCode = 400;
     this.name = "BadRequestError";
   }
+}

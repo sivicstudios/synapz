@@ -4,7 +4,7 @@ import slugify from 'slugify';
 export interface ICategory extends Document {
   name: string;
   image: string;
-  status: 'active' | 'inactive' | 'archived';
+  status: boolean;
   slug: string;
   createdAt: Date;
   updatedAt: Date;
@@ -25,9 +25,8 @@ const CategorySchema: Schema<ICategory> = new Schema(
       trim: true,
     },
     status: {
-      type: String,
-      enum: ['active', 'inactive', 'archived'],
-      default: 'active',
+      type: Boolean,
+      default: true,
     },
     slug: {
       type: String,
