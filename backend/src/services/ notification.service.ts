@@ -26,4 +26,18 @@ export class NotificationService {
       Notification.find(query).skip(skip).limit(limit).sort({ createdAt: -1 }),
       Notification.countDocuments(query),
     ]);
+    return { notification, total };
+}
+
+async getNotificationById(id: string): Promise<INotification> {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new BadRequestError("Invalid Notification ID");
+  }
+  const notification = await Notification.findById(id);
+  if (!notification) {
+    throw new NotFoundError("Notification Not Found");
+  }
+  return notification;
+}
+
 
