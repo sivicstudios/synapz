@@ -14,27 +14,25 @@
 }
 
 .text-border {
-    text-shadow: -2px -2px 0 #5D5D5D,
-        2px -2px 0 #5D5D5D,
-        -2px 2px 0 #5D5D5D,
-        2px 2px 0 #5D5D5D;
+  text-shadow: -2px -2px 0 #5d5d5d, 2px -2px 0 #5d5d5d, -2px 2px 0 #5d5d5d,
+    2px 2px 0 #5d5d5d;
 }
 
 .bowlby-one {
-    font-family: "Bowlby One", sans-serif;
+  font-family: "Bowlby One", sans-serif;
 }
 
 .ubuntu-sans {
-    font-family: "Ubuntu Sans", sans-serif;
+  font-family: "Ubuntu Sans", sans-serif;
 }
-.Kumbh-sans{
-    font-family: "Kumbh Sans", sans-serif;
+.Kumbh-sans {
+  font-family: "Kumbh Sans", sans-serif;
 }
 
 .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
