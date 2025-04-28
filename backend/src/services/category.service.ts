@@ -1,6 +1,6 @@
-import { Category, ICategory } from '../models/Category';
-import { NotFoundError, BadRequestError } from '../utils/errors';
-import { Types } from 'mongoose';
+import { Category, ICategory } from "../models/Category";
+import { NotFoundError, BadRequestError } from "../utils/errors";
+import { Types } from "mongoose";
 
 export class CategoryService {
   async createCategory(data: Partial<ICategory>): Promise<ICategory> {
@@ -9,7 +9,7 @@ export class CategoryService {
       return await category.save();
     } catch (error: any) {
       if (error.code === 11000) {
-        throw new BadRequestError('Category name or slug already exists');
+        throw new BadRequestError("Category name or slug already exists");
       }
       throw error;
     }
@@ -18,7 +18,7 @@ export class CategoryService {
   async getAllCategories(
     page: number = 1,
     limit: number = 10,
-    status?: string
+    status?: string,
   ): Promise<{ categories: ICategory[]; total: number }> {
     const query: any = {};
     if (status) {
@@ -36,11 +36,11 @@ export class CategoryService {
 
   async getCategoryById(id: string): Promise<ICategory> {
     if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestError('Invalid category ID');
+      throw new BadRequestError("Invalid category ID");
     }
     const category = await Category.findById(id);
     if (!category) {
-      throw new NotFoundError('Category not found');
+      throw new NotFoundError("Category not found");
     }
     return category;
   }
@@ -48,18 +48,21 @@ export class CategoryService {
   async getCategoryBySlug(slug: string): Promise<ICategory> {
     const category = await Category.findOne({ slug });
     if (!category) {
-      throw new NotFoundError('Category not found');
+      throw new NotFoundError("Category not found");
     }
     return category;
   }
 
-  async updateCategory(id: string, data: Partial<ICategory>): Promise<ICategory> {
+  async updateCategory(
+    id: string,
+    data: Partial<ICategory>,
+  ): Promise<ICategory> {
     if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestError('Invalid category ID');
+      throw new BadRequestError("Invalid category ID");
     }
     const category = await Category.findById(id);
     if (!category) {
-      throw new NotFoundError('Category not found');
+      throw new NotFoundError("Category not found");
     }
 
     Object.assign(category, data);
@@ -67,7 +70,7 @@ export class CategoryService {
       return await category.save();
     } catch (error: any) {
       if (error.code === 11000) {
-        throw new BadRequestError('Category name or slug already exists');
+        throw new BadRequestError("Category name or slug already exists");
       }
       throw error;
     }
@@ -75,11 +78,11 @@ export class CategoryService {
 
   async deleteCategory(id: string): Promise<void> {
     if (!Types.ObjectId.isValid(id)) {
-      throw new BadRequestError('Invalid category ID');
+      throw new BadRequestError("Invalid category ID");
     }
     const category = await Category.findById(id);
     if (!category) {
-      throw new NotFoundError('Category not found');
+      throw new NotFoundError("Category not found");
     }
     await category.deleteOne();
   }

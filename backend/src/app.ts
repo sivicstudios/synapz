@@ -5,8 +5,9 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 
 // Routes
-import userRoutes from './routes/userRoutes';
-import questionRoutes from './routes/questionRoutes';
+import userRoutes from "./routes/userRoutes";
+import questionRoutes from "./routes/questionRoutes";
+import categoryRoutes from "./routes/categoryRoutes";
 
 // Load environment variables
 dotenv.config();
@@ -25,8 +26,9 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Welcome to the Synapz Backend!");
 });
 
-app.use('/api/users', userRoutes);
-app.use('/api/questions', questionRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/questions", questionRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
