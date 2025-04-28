@@ -39,5 +39,33 @@ async getNotificationById(id: string): Promise<INotification> {
   }
   return notification;
 }
-
+async updateNotification(
+    id: string,
+    data: Partial<INotification>,
+  ): Promise<INotification> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestError("Invalid Notification ID");
+    }
+    const notification = await Notification.findById(id);
+    if (!notification) {
+      throw new NotFoundError("Notification Not Found");
+    }
+    Object.assign(notification, data);
+    try {
+      return await notification.save();
+    } catch (error: any) {
+        throw new BadRequestError(error);
+    }
+  }
+  async deleteNotification(id: string): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestError("Invalid Notification ID");
+    }
+    const notification = await Notification.findById(id);
+    if (!notification) {
+      throw new NotFoundError("Notification Not Found");
+    }
+    await notification.deleteOne();
+  }
+}
 
