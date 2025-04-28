@@ -3,7 +3,7 @@ interface FeedbackProps {
   points: number;
 }
 
-function Score({ is_correct, points }: FeedbackProps) {
+const Score = ({ is_correct, points }: FeedbackProps) => {
   return (
     <>
       <div className="w-full mx-auto pt-24 flex items-center justify-center flex-col gap-5">
@@ -30,6 +30,6 @@ function Score({ is_correct, points }: FeedbackProps) {
       </div>
     </>
   );
-}
+};
 
 export default Score;

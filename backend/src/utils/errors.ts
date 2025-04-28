@@ -1,3 +1,4 @@
+
 export class NotFoundError extends Error {
   statusCode: number;
   constructor(message: string) {
@@ -14,4 +15,3 @@ export class BadRequestError extends Error {
     this.statusCode = 400;
     this.name = "BadRequestError";
   }
-}

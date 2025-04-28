@@ -1,26 +1,30 @@
-import profile from "./assets/profile.svg";
 import challenger_mode from "./assets/challenger_mode.svg";
 import community from "./assets/community.svg";
 import daily from "./assets/daily.svg";
 import events1 from "./assets/events.svg";
 import events2 from "./assets/events2.svg";
 import events3 from "./assets/events3.svg";
-import home from "./assets/home.svg";
-import join_create from "./assets/join_create.svg";
-import menu from "./assets/menu.svg";
 import solo_icon from "./assets/solo_icon.svg";
 import solo from "./assets/solo.svg";
-import { useState } from "react";
+import BottomNav from "../main/BottomNav";
+import HeaderNav from "../main/HeaderNav";
 
 interface Event {
   icon: React.ReactNode;
   title: string;
 }
 
+interface GameMode {
+  icon: React.ReactNode;
+  gradient: string;
+  title: string;
+  iconWidth: string;
+}
+
 const events: Event[] = [
   {
     icon: <img className="w-[47px] max-w-full" src={events1} alt="icon" />,
-    title: "Events",
+    title: "Leaderboard",
   },
   {
     icon: <img className="w-[35px] max-w-full" src={events2} alt="icon" />,
@@ -32,45 +36,32 @@ const events: Event[] = [
   },
 ];
 
-function Home() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const game_modes: GameMode[] = [
+  {
+    icon: solo_icon,
+    gradient: "from-[#FFCED2] to-[#99A1D7]",
+    title: "Solo Mode",
+    iconWidth: "w-[24px]",
+  },
+  {
+    icon: challenger_mode,
+    gradient: "from-[#5A29ED] to-[#99A1D7]",
+    title: "Challenger Mode",
+    iconWidth: "w-[59px]",
+  },
+  {
+    icon: community,
+    gradient: "from-[#29EDCC] to-[#99A1D7]",
+    title: "Community Mode",
+    iconWidth: "w-[55px]",
+  },
+];
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
+const Home = () => {
   return (
     <>
-      <header className="flex items-center justify-between p-4 sm:p-6 border-b border-[#2D2D2D]">
-        <img src={profile} alt="Profile" className="w-10 sm:w-auto" />
-        <img src={join_create} alt="Join/Create" className="w-10 sm:w-auto" />
-        <img
-          className="cursor-pointer w-8 sm:w-auto"
-          src={menu}
-          alt="Menu"
-          onClick={toggleMenu}
-        />
-      </header>
-
-      {isMenuOpen && (
-        <div className="fixed inset-0 bg-[#000000b4] bg-opacity-50 z-50 md:hidden">
-          <div className="bg-[#1E1E1E] w-3/4 h-full absolute right-0 p-6">
-            <button
-              className="text-white mb-6 text-right w-full"
-              onClick={toggleMenu}
-            >
-              Close
-            </button>
-            <nav className="space-y-4">
-              <div className="text-white">Home</div>
-              <div className="text-white">Join Synapz</div>
-              <div className="text-white">Create Synapz</div>
-            </nav>
-          </div>
-        </div>
-      )}
-
-      <div className="p-4 sm:p-6">
+      <HeaderNav />
+      <div className="px-4 py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 bg-[#313131] p-1 rounded-lg">
           <div className="p-4 rounded-lg text-white text-center">
             <h1 className="mb-4 text-lg sm:text-xl">Recent Game</h1>
@@ -102,26 +93,7 @@ function Home() {
             Game Mode
           </h2>
           <div className="space-y-3">
-            {[
-              {
-                icon: solo_icon,
-                gradient: "from-[#FFCED2] to-[#99A1D7]",
-                title: "Solo Mode",
-                iconWidth: "w-[24px]",
-              },
-              {
-                icon: challenger_mode,
-                gradient: "from-[#5A29ED] to-[#99A1D7]",
-                title: "Challenger Mode",
-                iconWidth: "w-[59px]",
-              },
-              {
-                icon: community,
-                gradient: "from-[#29EDCC] to-[#99A1D7]",
-                title: "Community Mode",
-                iconWidth: "w-[55px]",
-              },
-            ].map((mode, index) => (
+            {game_modes.map((mode, index) => (
               <div key={index} className="rounded-lg text-white">
                 <div className="flex items-center justify-normal w-full">
                   <span
@@ -155,23 +127,8 @@ function Home() {
         </div>
       </div>
 
-      <footer className="fixed bottom-0 w-full max-w-[600px] grid grid-cols-3 bg-[#1E1E1E] p-4 sm:p-6 border-t border-[#2D2D2D] gap-2 sm:gap-4">
-        <div className="text-white flex cursor-pointer justify-center items-center flex-col">
-          <img src={home} alt="Home" className="w-6 sm:w-auto" />
-          <span className="text-xs sm:text-sm mt-1">Home</span>
-        </div>
-
-        <button className="bg-[#ED525A] px-2 py-2 sm:px-4 sm:py-3 cursor-pointer space-x-2 flex justify-center items-center rounded-lg text-white text-xs sm:text-base">
-          <img src={join_create} alt="Join" className="w-4 sm:w-auto" />
-          <span>Join Synapz</span>
-        </button>
-
-        <button className="bg-[#ED525A] px-2 py-2 sm:px-4 sm:py-3 cursor-pointer space-x-2 flex justify-center items-center rounded-lg text-white text-xs sm:text-base">
-          <img src={join_create} alt="Create" className="w-4 sm:w-auto" />
-          <span>Create Synapz</span>
-        </button>
-      </footer>
+      <BottomNav />
     </>
   );
-}
+};
 export default Home;
