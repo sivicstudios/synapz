@@ -3,11 +3,13 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import dotenv from "dotenv";
-
+import notificationRoutes from "./routes/notificationRoutes";
 // Routes
 import userRoutes from "./routes/userRoutes";
 import questionRoutes from "./routes/questionRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
+
+
 
 // Load environment variables
 dotenv.config();
@@ -29,6 +31,8 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/users", userRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/notifications", notificationRoutes);
+
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
