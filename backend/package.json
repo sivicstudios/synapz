@@ -46,6 +46,7 @@
     "@types/express": "^5.0.0",
     "@types/helmet": "^0.0.48",
     "@types/jsonwebtoken": "^9.0.9",
+    "@types/mongoose": "^5.11.97",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.13.9",
     "eslint": "^9.21.0",
