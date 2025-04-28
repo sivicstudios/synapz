@@ -11,3 +11,19 @@ export class NotificationService {
         throw new BadRequestError(error);
     }
   }
+  async getAllUserNotifications(
+    page: number = 1,
+    limit: number = 10,
+    user_id?: string,
+  ): Promise<{ notification: INotification[]; total: number }> {
+    const query: any = {};
+    if (user_id) {
+      query.user_id = user_id;
+    }
+
+    const skip = (page - 1) * limit;
+    const [notification, total] = await Promise.all([
+      Notification.find(query).skip(skip).limit(limit).sort({ createdAt: -1 }),
+      Notification.countDocuments(query),
+    ]);
+
