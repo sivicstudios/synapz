@@ -285,47 +285,45 @@ pub mod actions {
         /// - `INVALID_GAME_STATUS`: If the game specified by `game_id` is not in the `Lobby` state.
         /// - `NO_QUESTIONS`: If the trivia associated with the game has no questions added to it.
 
-        fn start_game(
-            ref self: ContractState, game_id: u64
-        ) {
-        // Obtain a mutable reference to the contract's default world state.
-        let mut world = self.world_default();
-        // Retrieve the address of the user who is calling this function.
-        let caller = get_caller_address();
+        fn start_game(ref self: ContractState, game_id: u64) {
+            // Obtain a mutable reference to the contract's default world state.
+            let mut world = self.world_default();
+            // Retrieve the address of the user who is calling this function.
+            let caller = get_caller_address();
 
-        // Read the `Game` model using the provided `game_id`.
-        let mut game: Game = world.read_model(game_id);
+            // Read the `Game` model using the provided `game_id`.
+            let mut game: Game = world.read_model(game_id);
 
-        // Assert that the caller is the host of the game.
-        assert(game.host == caller, UNAUTHORIZED);
+            // Assert that the caller is the host of the game.
+            assert(game.host == caller, UNAUTHORIZED);
 
-        // Assert that the game is currently in the `Lobby` state.
-        assert(game.status == GameStatus::Lobby, INVALID_GAME_STATUS);
+            // Assert that the game is currently in the `Lobby` state.
+            assert(game.status == GameStatus::Lobby, INVALID_GAME_STATUS);
 
-        // Assert that at least one player has joined
-        assert(game.player_count > 0, NO_PLAYERS);
+            // Assert that at least one player has joined
+            assert(game.player_count > 0, NO_PLAYERS);
 
-        // Read the `TriviaInfo` model associated with the game's trivia content.
-        let trivia_info: TriviaInfo = world.read_model(game.trivia_id);
+            // Read the `TriviaInfo` model associated with the game's trivia content.
+            let trivia_info: TriviaInfo = world.read_model(game.trivia_id);
 
-        // Assert that there is at least one question in the trivia.
-        assert(trivia_info.question_count > 0, NO_QUESTIONS);
+            // Assert that there is at least one question in the trivia.
+            assert(trivia_info.question_count > 0, NO_QUESTIONS);
 
-        // Read the first question of the trivia (question_index 0).
-        let question: Question = world.read_model((game.trivia_id, 1_u8));
+            // Read the first question of the trivia (question_index 0).
+            let question: Question = world.read_model((game.trivia_id, 1_u8));
 
-        // Update the game status to `InProgress`.
-        game.status = GameStatus::InProgress;
+            // Update the game status to `InProgress`.
+            game.status = GameStatus::InProgress;
 
-        // Set the timer end for the first question based on its time limit.
-        game.current_question = question.question_index;
-        game.timer_end = get_block_timestamp() + question.time_limit.into();
+            // Set the timer end for the first question based on its time limit.
+            game.current_question = question.question_index;
+            game.timer_end = get_block_timestamp() + question.time_limit.into();
 
-        // Update the `Game` model in the world state.
-        world.write_model(@game);
+            // Update the `Game` model in the world state.
+            world.write_model(@game);
 
-        // Emit an event to signal that the game has started.
-        world.emit_event(@GameStarted { game_id, timestamp: get_block_timestamp() });
+            // Emit an event to signal that the game has started.
+            world.emit_event(@GameStarted { game_id, timestamp: get_block_timestamp() });
         }
 
         /// Allows a player to submit an answer to the current question in a running game.
@@ -392,52 +390,88 @@ pub mod actions {
         ///   `game_id`.
         /// - `ALREADY_ANSWERED`: If the calling player has already submitted an answer for the
         ///   current question.
-        fn submit_answer(
-            ref self: ContractState, game_id: u64, answer_index: u8,
-        ) { // Obtain a mutable reference to the contract's default world state.
-        // Retrieve the address of the user who is calling this function.
+        fn submit_answer(ref self: ContractState, game_id: u64, answer_index: u8) {
+            // Obtain a mutable reference to the contract's default world state.
+            let mut world = self.world_default();
+            // Retrieve the address of the user who is calling this function.
+            let caller = get_caller_address();
+            // Get the current block timestamp.
+            let now = get_block_timestamp();
 
-        // Get the current block timestamp.
+            // Read the `Game` model using the provided `game_id`.
+            let game: Game = world.read_model(game_id);
+            // Assert that the game is currently in the `InProgress` state.
+            assert(game.status == GameStatus::InProgress, INVALID_GAME_STATUS);
+            // Assert that the current time is within the time limit for the current question.
+            assert(now <= game.timer_end, TIME_EXPIRED);
 
-        // Read the `Game` model using the provided `game_id`.
+            // Read the `Player` model for the calling player in the specified game.
+            let mut player: Player = world.read_model((game_id, caller));
+            // Assert that the player is indeed part of this game.
+            assert(player.last_answer_time != 0, NOT_IN_GAME);
 
-        // Assert that the game is currently in the `InProgress` state.
+            // Construct the key to check if the player has already answered this question.
+            let answer_key = (game_id, game.current_question, caller);
+            // Attempt to read an existing `Answer` model for this question and player.
+            let existing: Answer = world.read_model(answer_key);
+            // Assert that no answer has been submitted yet by this player for the current question.
+            assert(existing.timestamp == 0, ALREADY_ANSWERED);
 
-        // Assert that the current time is within the time limit for the current question.
+            // Read the current `Question` model based on the game's trivia ID and the current
+            // question index.
+            let question: Question = world.read_model((game.trivia_id, game.current_question));
+            // Determine if the submitted answer is correct.
+            let correct = answer_index == question.correct_answer;
+            // Calculate the time bonus based on the remaining time (in seconds) multiplied by 10.
+            let time_bonus = (game.timer_end - now) * 10;
 
-        // Read the `Player` model for the calling player in the specified game.
+            // Store the player's previous score for the event.
+            let prev_score = player.score;
+            // Award points based on whether the answer is correct, including the time bonus.
+            player.score += if correct {
+                (100 + time_bonus).try_into().unwrap()
+            } else {
+                0
+            };
 
-        // Assert that the player is indeed part of this game.
+            // Update the player's streak based on the correctness of the answer.
+            if correct {
+                player.streak += 1;
+                if player.streak > 1 {
+                    // Award bonus points based on the current streak.
+                    player.score += (player.streak).into() * 50;
+                }
+            } else {
+                player.streak = 0;
+            }
+            // Store the player's score after updating.
+            let post_score = player.score;
+            // Update the `Player` model in the world state.
+            world.write_model(@player);
 
-        // Construct the key to check if the player has already answered this question.
+            // Create a new `Answer` model to record the submitted answer.
+            world
+                .write_model(
+                    @Answer {
+                        game_id,
+                        question_index: game.current_question,
+                        player_address: caller,
+                        answer_index,
+                        is_correct: correct,
+                        timestamp: now,
+                    },
+                );
 
-        // Attempt to read an existing `Answer` model for this question and player.
-
-        // Assert that no answer has been submitted yet by this player for the current question.
-
-        // Read the current `Question` model based on the game's trivia ID and the current
-        // question index.
-
-        // Determine if the submitted answer is correct.
-
-        // Calculate the time bonus based on the remaining time (in seconds) multiplied by 10.
-
-        // Store the player's previous score.
-
-        // Award points based on whether the answer is correct, including the time bonus.
-
-        // Update the player's streak based on the correctness of the answer.
-
-        // Award bonus points based on the current streak.
-
-        // Store the player's score after updating.
-
-        // Update the `Player` model in the world state.
-
-        // Create a new `Answer` model to record the submitted answer.
-
-        // Emit an event to signal that a player has submitted an answer.
-
+            // Emit an event to signal that a player has submitted an answer.
+            world
+                .emit_event(
+                    @AnswerSubmitted {
+                        answer_index: answer_index.into(),
+                        game_id,
+                        player_address: caller,
+                        score_awarded: post_score - prev_score,
+                    },
+                );
         }
 
         /// Advances the trivia game to the next question or ends the game if all questions have

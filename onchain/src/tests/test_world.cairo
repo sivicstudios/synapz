@@ -248,4 +248,140 @@ mod tests {
         testing::set_contract_address(host_addr);
         game_actions.start_game(game_id);
     }
+
+    // Tests for `submit_answer`
+    #[test]
+    #[available_gas(3000000000)]
+    fn test_submit_answer_success() {
+        let (world, game_actions) = test_setup();
+        let host_addr = owner();
+        let player1_addr = player1();
+        let player2_addr = player2();
+        let start_time = 1000_u64;
+
+        // Setup: trivia, 2 questions, game, 2 players, start game
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME); // Index 1
+        game_actions.add_question(trivia_id, Q2_TEXT, Q2_OPTIONS, Q2_ANSWER, Q2_TIME); // Index 2
+        let game_id = game_actions.create_game(trivia_id);
+
+        testing::set_block_timestamp(start_time);
+        testing::set_contract_address(player1_addr);
+        game_actions.join_game(game_id);
+        testing::set_contract_address(player2_addr);
+        game_actions.join_game(game_id);
+
+        testing::set_contract_address(host_addr);
+        game_actions.start_game(game_id);
+
+        let q1_timer_end = start_time + Q1_TIME.into();
+
+        // --- Player 1 Submits Correct Answer (Success) ---
+        let p1_submit_time = start_time + 5; // Submit 5s after start
+        testing::set_block_timestamp(p1_submit_time);
+        testing::set_contract_address(player1_addr);
+        game_actions.submit_answer(game_id, Q1_ANSWER);
+
+        // Verify Player 1 score
+        let p1_model: Player = world.read_model((game_id, player1_addr));
+        let time_remaining = q1_timer_end - p1_submit_time;
+        let expected_bonus = time_remaining * 10;
+        let expected_score: u32 = (100 + expected_bonus)
+            .try_into()
+            .unwrap(); // Base score + time bonus
+        assert_eq!(p1_model.score, expected_score); // check score
+        assert_eq!(p1_model.streak, 1); // Streak is 1
+
+        // Verify Answer model
+        let answer_key = (game_id, 1_u8, player1_addr); // Q1 index is 1
+        let answer: Answer = world.read_model(answer_key);
+        assert!(answer.is_correct);
+        assert_eq!(answer.timestamp, p1_submit_time);
+
+        // --- Player 2 Submits Incorrect Answer (Success) ---
+        let p2_submit_time = start_time + 8;
+        testing::set_block_timestamp(p2_submit_time);
+        testing::set_contract_address(player2_addr);
+        let incorrect_answer = (Q1_ANSWER + 1) % 3;
+        game_actions.submit_answer(game_id, incorrect_answer);
+
+        // Verify Player 2 score
+        let p2_model: Player = world.read_model((game_id, player2_addr));
+        assert_eq!(p2_model.score, 0); // Incorrect answer gets 0 points
+        assert_eq!(p2_model.streak, 0); // Streak reset/remains 0
+    }
+
+    #[test]
+    #[available_gas(3000000000)]
+    #[should_panic(expected: ('Invalid game status', 'ENTRYPOINT_FAILED'))]
+    fn test_submit_answer_invalid_game_status() {
+        let (_, game_actions) = test_setup();
+        let host_addr = owner();
+        let player1_addr = player1();
+        let player2_addr = player2();
+        let start_time = 1000_u64;
+
+        // Setup: trivia, 2 questions, game, 2 players, start game
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME); // Index 1
+        let game_id = game_actions.create_game(trivia_id);
+
+        testing::set_block_timestamp(start_time);
+        testing::set_contract_address(player1_addr);
+        game_actions.join_game(game_id);
+        testing::set_contract_address(player2_addr);
+        game_actions.join_game(game_id);
+
+        testing::set_contract_address(host_addr);
+        game_actions.start_game(game_id);
+
+        // --- Player 1 Submits Correct Answer (Fails) ---
+        let p1_submit_time = start_time + 5;
+        testing::set_block_timestamp(p1_submit_time);
+        testing::set_contract_address(player1_addr);
+        game_actions.submit_answer(game_id, Q1_ANSWER);
+
+        testing::set_contract_address(host_addr);
+        game_actions.next_question(game_id);
+
+        testing::set_contract_address(player1_addr);
+        game_actions.submit_answer(game_id, Q1_ANSWER);
+    }
+
+    #[test]
+    #[available_gas(3000000000)]
+    #[should_panic(expected: ('Time expired', 'ENTRYPOINT_FAILED'))]
+    fn test_submit_answer_after_time_elapsed_fails() {
+        let (_, game_actions) = test_setup();
+        let host_addr = owner();
+        let player1_addr = player1();
+        let player2_addr = player2();
+        let start_time = 1000_u64;
+
+        // Setup: trivia, 2 questions, game, 2 players, start game
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME); // Index 1
+        game_actions.add_question(trivia_id, Q2_TEXT, Q2_OPTIONS, Q2_ANSWER, Q2_TIME); // Index 2
+        let game_id = game_actions.create_game(trivia_id);
+
+        testing::set_block_timestamp(start_time);
+        testing::set_contract_address(player1_addr);
+        game_actions.join_game(game_id);
+        testing::set_contract_address(player2_addr);
+        game_actions.join_game(game_id);
+
+        testing::set_contract_address(host_addr);
+        game_actions.start_game(game_id);
+
+        let q1_timer_end = start_time + Q1_TIME.into();
+
+        // --- Player 1 Submits Correct Answer (Success) ---
+        let p1_submit_time = q1_timer_end + 5; // Submit 5s after start
+        testing::set_block_timestamp(p1_submit_time);
+        testing::set_contract_address(player1_addr);
+        game_actions.submit_answer(game_id, Q1_ANSWER);
+    }
 }
