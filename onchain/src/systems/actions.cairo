@@ -284,31 +284,48 @@ pub mod actions {
         /// - `UNAUTHORIZED`: If the caller is not the host of the game specified by `game_id`.
         /// - `INVALID_GAME_STATUS`: If the game specified by `game_id` is not in the `Lobby` state.
         /// - `NO_QUESTIONS`: If the trivia associated with the game has no questions added to it.
+
         fn start_game(
-            ref self: ContractState, game_id: u64,
-        ) { // Obtain a mutable reference to the contract's default world state.
+            ref self: ContractState, game_id: u64
+        ) {
+        // Obtain a mutable reference to the contract's default world state.
+        let mut world = self.world_default();
         // Retrieve the address of the user who is calling this function.
+        let caller = get_caller_address();
 
         // Read the `Game` model using the provided `game_id`.
+        let mut game: Game = world.read_model(game_id);
 
         // Assert that the caller is the host of the game.
+        assert(game.host == caller, UNAUTHORIZED);
 
         // Assert that the game is currently in the `Lobby` state.
+        assert(game.status == GameStatus::Lobby, INVALID_GAME_STATUS);
+
+        // Assert that at least one player has joined
+        assert(game.player_count > 0, NO_PLAYERS);
 
         // Read the `TriviaInfo` model associated with the game's trivia content.
+        let trivia_info: TriviaInfo = world.read_model(game.trivia_id);
 
         // Assert that there is at least one question in the trivia.
+        assert(trivia_info.question_count > 0, NO_QUESTIONS);
 
         // Read the first question of the trivia (question_index 0).
+        let question: Question = world.read_model((game.trivia_id, 1_u8));
 
         // Update the game status to `InProgress`.
+        game.status = GameStatus::InProgress;
 
         // Set the timer end for the first question based on its time limit.
+        game.current_question = question.question_index;
+        game.timer_end = get_block_timestamp() + question.time_limit.into();
 
         // Update the `Game` model in the world state.
+        world.write_model(@game);
 
         // Emit an event to signal that the game has started.
-
+        world.emit_event(@GameStarted { game_id, timestamp: get_block_timestamp() });
         }
 
         /// Allows a player to submit an answer to the current question in a running game.
