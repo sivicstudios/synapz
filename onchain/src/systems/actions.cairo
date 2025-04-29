@@ -41,24 +41,24 @@ pub mod actions {
         fn create_trivia(
             ref self: ContractState,
         ) -> u64 { // Obtain a mutable reference to the contract's default world state.
-        // Retrieve the address of the user who is calling this function. This address will be
-        // the owner of the new trivia game.
+            // Retrieve the address of the user who is calling this function. This address will be
+            // the owner of the new trivia game.
 
-        // Generate a unique identifier for this new trivia game. This uses a contract-level
-        // resource counter to ensure that each trivia game has a distinct ID.
+            // Generate a unique identifier for this new trivia game. This uses a contract-level
+            // resource counter to ensure that each trivia game has a distinct ID.
 
-        // Create the core `Trivia` data model and persist it to the world state.
-        // This model stores fundamental information about the trivia game.
+            // Create the core `Trivia` data model and persist it to the world state.
+            // This model stores fundamental information about the trivia game.
 
-        // Create the `TriviaInfo` data model and persist it.
-        // This model holds additional information, such as the number of questions currently
-        // associated with the trivia (initially 0).
+            // Create the `TriviaInfo` data model and persist it.
+            // This model holds additional information, such as the number of questions currently
+            // associated with the trivia (initially 0).
 
-        // Emit an event to signal that a new trivia game has been successfully created.
-        // This event includes important details about the new game.
+            // Emit an event to signal that a new trivia game has been successfully created.
+            // This event includes important details about the new game.
 
-        // Return the unique identifier of the newly created trivia game.
-
+            // Return the unique identifier of the newly created trivia game.
+            0
         }
 
         /// Adds a new question to an existing trivia game.
@@ -163,24 +163,24 @@ pub mod actions {
         fn create_game(
             ref self: ContractState, trivia_id: u64,
         ) -> u64 { // Obtain a mutable reference to the contract's default world state.
-        // Retrieve the address of the user who is calling this function. This user will be the
-        // host of the new game.
+            // Retrieve the address of the user who is calling this function. This user will be the
+            // host of the new game.
 
-        // Generate a unique identifier for this new game session. This uses a contract-level
-        // resource counter to ensure that each game has a distinct ID.
+            // Generate a unique identifier for this new game session. This uses a contract-level
+            // resource counter to ensure that each game has a distinct ID.
 
-        // Retrieve the trivia data model using the provided trivia ID.
+            // Retrieve the trivia data model using the provided trivia ID.
 
-        // Assert that the caller is the owner of the trivia.
+            // Assert that the caller is the owner of the trivia.
 
-        // Create the `Game` data model and persist it to the world state with its initial
-        // configuration.
+            // Create the `Game` data model and persist it to the world state with its initial
+            // configuration.
 
-        // Emit an event to signal that a new game session has been successfully created.
-        // This event includes important details about the new game.
+            // Emit an event to signal that a new game session has been successfully created.
+            // This event includes important details about the new game.
 
-        // Return the unique identifier of the newly created game session.
-
+            // Return the unique identifier of the newly created game session.
+            0
         }
 
         /// Allows a user to join an existing trivia game that is in the lobby state.
@@ -523,23 +523,26 @@ pub mod actions {
         /// A `Span` of tuples, where each tuple contains:
         /// - The `ContractAddress` of a player in the game.
         /// - The player's current score (`u32`).
-        fn view_leader_board(self: @ContractState, game_id: u64) -> Span<(ContractAddress, u32)> {// Obtain a read-only reference to the contract's default world state.
+        fn view_leader_board(
+            self: @ContractState, game_id: u64,
+        ) -> Span<
+            (ContractAddress, u32),
+        > { // Obtain a read-only reference to the contract's default world state.
+            // Read the `Game` model to get the number of players in the game.
 
-        // Read the `Game` model to get the number of players in the game.
+            // Initialize an empty array to store player addresses and their scores.
 
-        // Initialize an empty array to store player addresses and their scores.
+            // Iterate through each player in the game, based on the player count.
 
-        // Iterate through each player in the game, based on the player count.
+            // Read the `PlayerBoard` model to get the address of the player with the current
+            // ID.
 
-        // Read the `PlayerBoard` model to get the address of the player with the current
-        // ID.
+            // Read the `Player` model to get the player's score.
 
-        // Read the `Player` model to get the player's score.
+            // Append the player's address and score to the `scores` array.
 
-        // Append the player's address and score to the `scores` array.
-
-        // Convert the `scores` array into a `Span` for returning.
-
+            // Convert the `scores` array into a `Span` for returning.
+            array![(get_caller_address(), 0)].span()
         }
     }
 
