@@ -123,4 +123,217 @@ mod tests {
 
         (world, game_actions)
     }
+
+    fn join_game(ref self: ContractState, game_id: u64) {
+            // Obtain a mutable reference to the contract's default world state.
+            let mut world = self.world_default();
+            // Retrieve the address of the user who is calling this function. This is the player
+            // joining the game.
+            let caller = get_caller_address();
+
+            // Read the `Game` model using the provided `game_id`.
+            let mut game: Game = world.read_model(game_id);
+            // Assert that the game's status is `Lobby`, meaning it's open for players to join.
+            assert(game.status == GameStatus::Lobby, NOT_IN_LOBBY);
+
+            // Attempt to read a `Player` model for the calling address within the specified game.
+            // If a player model exists with a non-zero `last_answer_time`, it means the player has
+            // already joined.
+            let player: Player = world.read_model((game_id, caller));
+            assert(player.last_answer_time == 0, ALREADY_IN_GAME);
+
+            // Create a new `Player` model for the joining player and persist it to the world state.
+            world
+                .write_model(
+                    @Player {
+                        game_id,
+                        player_address: caller,
+                        score: 0,
+                        streak: 0,
+                        last_answer_time: get_block_timestamp(),
+                    },
+                );
+
+            // Increment the player count in the `Game` model.
+            game.player_count += 1;
+            // Update the `Game` model in the world state with the new player count.
+            world.write_model(@game);
+            // Create a `PlayerBoard` entry to track the order of players.
+            world
+                .write_model(
+                    @PlayerBoard { game_id, player_id: game.player_count, player: caller },
+                );
+
+            // Emit an event to signal that a player has joined the game.
+            world
+                .emit_event(
+                    @PlayerJoined {
+                        game_id, player_address: caller, timestamp: get_block_timestamp(),
+                    },
+                );
+        }
+        #[test]
+            #[available_gas(3000000000)]
+            fn test_join_game_success() {
+                let (world, game_actions) = test_setup();
+                let host_addr = owner();
+                let player1_addr = player1();
+                let player2_addr = player2();
+                let initial_time = 1000_u64;
+                testing::set_block_timestamp(initial_time);
+        
+                // Setup: Create trivia, add question, create game
+                testing::set_contract_address(host_addr);
+                let trivia_id = game_actions.create_trivia();
+                game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME);
+                let game_id = game_actions.create_game(trivia_id);
+        
+                // --- Player 1 Joins (Success) ---
+                testing::set_contract_address(player1_addr);
+                game_actions.join_game(game_id);
+        
+                // Verify Player 1 state
+                let player1_model: Player = world.read_model((game_id, player1_addr));
+                assert_eq!(player1_model.game_id, game_id);
+                assert_eq!(player1_model.player_address, player1_addr);
+                assert_eq!(player1_model.score, 0);
+                assert_eq!(player1_model.streak, 0);
+                assert_eq!(player1_model.last_answer_time, initial_time);
+        
+                // Verify Game state
+                let mut game: Game = world.read_model(game_id);
+                assert_eq!(game.player_count, 1);
+        
+                // Verify PlayerBoard
+                let board_p1: PlayerBoard = world.read_model((game_id, 1_u32));
+                assert_eq!(board_p1.player, player1_addr);
+        
+                // --- Player 2 Joins (Success) ---
+                let join_time_p2 = initial_time + 10;
+                testing::set_block_timestamp(join_time_p2);
+                testing::set_contract_address(player2_addr);
+                game_actions.join_game(game_id);
+        
+                // Verify Player 2 state
+                let player2_model: Player = world.read_model((game_id, player2_addr));
+                assert_eq!(player2_model.game_id, game_id);
+                assert_eq!(player2_model.player_address, player2_addr);
+                assert_eq!(player2_model.score, 0);
+                assert_eq!(player2_model.streak, 0);
+                assert_eq!(player2_model.last_answer_time, join_time_p2);
+        
+                // Verify Game state
+                game = world.read_model((game_id,));
+                assert_eq!(game.player_count, 2);
+        
+                // Verify PlayerBoard
+                let board_p2: PlayerBoard = world.read_model((game_id, 2_u32));
+                assert_eq!(board_p2.player, player2_addr);
+            }
+        
+            #[test]
+            #[available_gas(3000000000)]
+            #[should_panic(expected: ('Already in game', 'ENTRYPOINT_FAILED'))]
+            fn test_double_join_game_failure() {
+                let (world, game_actions) = test_setup();
+                let host_addr = owner();
+                let player1_addr = player1();
+                let initial_time = 1000_u64;
+                testing::set_block_timestamp(initial_time);
+        
+                // Setup: Create trivia, add question, create game
+                testing::set_contract_address(host_addr);
+                let trivia_id = game_actions.create_trivia();
+                game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME);
+                let game_id = game_actions.create_game(trivia_id);
+        
+                // --- Player 1 Joins (Success) ---
+                testing::set_contract_address(player1_addr);
+                game_actions.join_game(game_id);
+        
+                // Verify Player 1 state
+                let player1_model: Player = world.read_model((game_id, player1_addr));
+                assert_eq!(player1_model.game_id, game_id);
+                assert_eq!(player1_model.player_address, player1_addr);
+                assert_eq!(player1_model.score, 0);
+                assert_eq!(player1_model.streak, 0);
+                assert_eq!(player1_model.last_answer_time, initial_time);
+        
+                // Verify Game state
+                let mut game: Game = world.read_model(game_id);
+                assert_eq!(game.player_count, 1);
+        
+                // Verify PlayerBoard
+                let board_p1: PlayerBoard = world.read_model((game_id, 1_u32));
+                assert_eq!(board_p1.player, player1_addr);
+        
+                // --- Player 1 Joins again (Panics) ---
+                game_actions.join_game(game_id);
+            }
+        
+            #[test]
+            #[available_gas(3000000000)]
+            #[should_panic(expected: ('Not in lobby', 'ENTRYPOINT_FAILED'))]
+            fn test_join_game_not_in_lobby() {
+                let (world, game_actions) = test_setup();
+                let host_addr = owner();
+                let player1_addr = player1();
+                let player2_addr = player2();
+                let initial_time = 1000_u64;
+                testing::set_block_timestamp(initial_time);
+        
+                // Setup: Create trivia, add question, create game
+                testing::set_contract_address(host_addr);
+                let trivia_id = game_actions.create_trivia();
+                game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME);
+                let game_id = game_actions.create_game(trivia_id);
+        
+                // --- Player 1 Joins (Success) ---
+                testing::set_contract_address(player1_addr);
+                game_actions.join_game(game_id);
+        
+                // Verify Player 1 state
+                let player1_model: Player = world.read_model((game_id, player1_addr));
+                assert_eq!(player1_model.game_id, game_id);
+                assert_eq!(player1_model.player_address, player1_addr);
+                assert_eq!(player1_model.score, 0);
+                assert_eq!(player1_model.streak, 0);
+                assert_eq!(player1_model.last_answer_time, initial_time);
+        
+                // Verify Game state
+                let mut game: Game = world.read_model(game_id);
+                assert_eq!(game.player_count, 1);
+        
+                // Verify PlayerBoard
+                let board_p1: PlayerBoard = world.read_model((game_id, 1_u32));
+                assert_eq!(board_p1.player, player1_addr);
+        
+                // --- Player 2 Joins (Success) ---
+                let join_time_p2 = initial_time + 10;
+                testing::set_block_timestamp(join_time_p2);
+                testing::set_contract_address(player2_addr);
+                game_actions.join_game(game_id);
+        
+                // Verify Player 2 state
+                let player2_model: Player = world.read_model((game_id, player2_addr));
+                assert_eq!(player2_model.game_id, game_id);
+                assert_eq!(player2_model.player_address, player2_addr);
+                assert_eq!(player2_model.score, 0);
+                assert_eq!(player2_model.streak, 0);
+                assert_eq!(player2_model.last_answer_time, join_time_p2);
+        
+                // Verify Game state
+                game = world.read_model((game_id,));
+                assert_eq!(game.player_count, 2);
+        
+                // Verify PlayerBoard
+                let board_p2: PlayerBoard = world.read_model((game_id, 2_u32));
+                assert_eq!(board_p2.player, player2_addr);
+        
+                testing::set_contract_address(host_addr);
+                game_actions.start_game(game_id);
+        
+                testing::set_contract_address(non_player());
+                game_actions.join_game(game_id);
+            }
 }
