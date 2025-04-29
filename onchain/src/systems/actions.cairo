@@ -224,31 +224,54 @@ pub mod actions {
         ///   it has already started).
         /// - `ALREADY_IN_GAME`: If the calling player's address is already associated with a
         ///   `Player` model in the specified `game_id`.
-        fn join_game(
-            ref self: ContractState, game_id: u64,
-        ) { // Obtain a mutable reference to the contract's default world state.
-        // Retrieve the address of the user who is calling this function. This is the player
-        // joining the game.
-
-        // Read the `Game` model using the provided `game_id`.
-
-        // Assert that the game's status is `Lobby`, meaning it's open for players to join.
-
-        // Attempt to read a `Player` model for the calling address within the specified game.
-        // If a player model exists with a non-zero `last_answer_time`, it means the player has
-        // already joined.
-
-        // Create a new `Player` model for the joining player and persist it to the world state.
-
-        // Increment the player count in the `Game` model.
-
-        // Update the `Game` model in the world state with the new player count.
-
-        // Create a `PlayerBoard` entry to track the order of players.
-
-        // Emit an event to signal that a player has joined the game.
-
-        }
+        fn join_game(ref self: ContractState, game_id: u64) {
+                    // Obtain a mutable reference to the contract's default world state.
+                    let mut world = self.world_default();
+                    // Retrieve the address of the user who is calling this function. This is the player
+                    // joining the game.
+                    let caller = get_caller_address();
+        
+                    // Read the `Game` model using the provided `game_id`.
+                    let mut game: Game = world.read_model(game_id);
+                    // Assert that the game's status is `Lobby`, meaning it's open for players to join.
+                    assert(game.status == GameStatus::Lobby, NOT_IN_LOBBY);
+        
+                    // Attempt to read a `Player` model for the calling address within the specified game.
+                    // If a player model exists with a non-zero `last_answer_time`, it means the player has
+                    // already joined.
+                    let player: Player = world.read_model((game_id, caller));
+                    assert(player.last_answer_time == 0, ALREADY_IN_GAME);
+        
+                    // Create a new `Player` model for the joining player and persist it to the world state.
+                    world
+                        .write_model(
+                            @Player {
+                                game_id,
+                                player_address: caller,
+                                score: 0,
+                                streak: 0,
+                                last_answer_time: get_block_timestamp(),
+                            },
+                        );
+        
+                    // Increment the player count in the `Game` model.
+                    game.player_count += 1;
+                    // Update the `Game` model in the world state with the new player count.
+                    world.write_model(@game);
+                    // Create a `PlayerBoard` entry to track the order of players.
+                    world
+                        .write_model(
+                            @PlayerBoard { game_id, player_id: game.player_count, player: caller },
+                        );
+        
+                    // Emit an event to signal that a player has joined the game.
+                    world
+                        .emit_event(
+                            @PlayerJoined {
+                                game_id, player_address: caller, timestamp: get_block_timestamp(),
+                            },
+                        );
+                }
 
         /// Starts a trivia game session.
         ///
