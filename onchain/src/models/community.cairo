@@ -51,11 +51,11 @@ pub struct Question {
     /// The unique identifier of the trivia game this question belongs to.
     #[key]
     pub trivia_id: u64,
-    /// The time limit in seconds for answering this question.
     #[key]
-    pub time_limit: u8,
     /// The index of this question within the trivia game.
     pub question_index: u8,
+    /// The time limit in seconds for answering this question.
+    pub time_limit: u8,
     /// The index of the correct answer among the options.
     pub correct_answer: u8,
     /// The text content of the question.
@@ -63,6 +63,7 @@ pub struct Question {
     /// The available answer options, likely encoded in a specific format.
     pub options: felt252,
 }
+
 
 /// Represents an active instance of a trivia game.
 #[derive(Copy, Drop, Serde, Debug)]

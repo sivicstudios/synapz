@@ -103,30 +103,42 @@ pub mod actions {
             options: felt252,
             correct_answer: u8,
             time_limit: u8,
-        ) { // Obtain a mutable reference to the contract's default world state.
-        // Retrieve the address of the user who is calling this function.
+        ) { 
+        // Obtain a mutable reference to the contract's default world state.
+            let mut world = self.world_default();
+            // Retrieve the address of the user who is calling this function.
+            let caller = get_caller_address();
 
-        // Read the `Trivia` model using the provided `trivia_id`. This ensures the trivia game
-        // exists.
+            // Read the `Trivia` model using the provided `trivia_id`. This ensures the trivia game
+            // exists.
+            let trivia: Trivia = world.read_model(trivia_id);
+            // Assert that the caller is the owner of the trivia game. If not, the transaction will
+            // fail.
+            assert(trivia.owner == caller, UNAUTHORIZED);
 
-        // Assert that the caller is the owner of the trivia game. If not, the transaction will
-        // fail.
+            // Read the `TriviaInfo` model associated with the `trivia_id` to access the current
+            // question count.
+            let mut trivia_info: TriviaInfo = world.read_model(trivia_id);
+            // Calculate the index for the new question. It will be one greater than the current
+            // question count.
+            let question_index = trivia_info.question_count + 1;
 
-        // Read the `TriviaInfo` model associated with the `trivia_id` to access the current
-        // question count.
+            // Create a new `Question` model with the provided details and persist it to the world
+            // state.
+            world
+                .write_model(
+                    @Question {
+                        trivia_id, question_index, text, options, correct_answer, time_limit,
+                    },
+                );
 
-        // Calculate the index for the new question. It will be one greater than the current
-        // question count.
+            // Increment the question count in the `TriviaInfo` model.
+            trivia_info.question_count += 1;
+            // Update the `TriviaInfo` model in the world state with the new question count.
+            world.write_model(@trivia_info);
 
-        // Create a new `Question` model with the provided details and persist it to the world
-        // state.
-
-        // Increment the question count in the `TriviaInfo` model.
-
-        // Update the `TriviaInfo` model in the world state with the new question count.
-
-        // Emit an event to signal that a new question has been added to the trivia game.
-
+            // Emit an event to signal that a new question has been added to the trivia game.
+            world.emit_event(@QuestionAdded { trivia_id, question_index });
         }
 
         /// Creates a new instance of a trivia game for players to join.
