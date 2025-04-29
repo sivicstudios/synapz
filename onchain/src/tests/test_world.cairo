@@ -549,4 +549,49 @@ mod tests {
         testing::set_contract_address(non_player());
         game_actions.join_game(game_id);
     }
+
+    #[test]
+    #[available_gas(3000000000)]
+    fn test_add_question_success() {
+        let (world, game_actions) = test_setup();
+        let host_addr = owner();
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME);
+
+        // Verify Question model (Assuming 1-based indexing is fixed)
+        let question_index = 1_u8;
+        let question: Question = world.read_model((trivia_id, question_index));
+
+        assert_eq!(question.trivia_id, trivia_id);
+        assert_eq!(question.question_index, question_index);
+        assert_eq!(question.text, Q1_TEXT);
+        assert_eq!(question.options, Q1_OPTIONS);
+        assert_eq!(question.correct_answer, Q1_ANSWER);
+        assert_eq!(question.time_limit, Q1_TIME);
+
+        // Verify TriviaInfo update
+        let trivia_info: TriviaInfo = world.read_model(trivia_id);
+        assert_eq!(trivia_info.question_count, 1);
+    }
+
+    #[test]
+    #[available_gas(3000000000)]
+    #[should_panic(expected: ('Unauthorized', 'ENTRYPOINT_FAILED'))]
+    fn test_add_question_unauthorized() {
+        let (_, game_actions) = test_setup();
+        let host_addr = owner();
+        let other_addr = non_owner();
+
+        // Create trivia as owner
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+
+        // Try to add question as non-owner
+        testing::set_contract_address(other_addr);
+        game_actions
+            .add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME); // Should panic
+    }
+
 }
