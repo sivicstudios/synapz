@@ -123,4 +123,129 @@ mod tests {
 
         (world, game_actions)
     }
+
+    // Test game start transition for host
+    #[test]
+    #[available_gas(3000000000)]
+    fn test_start_game_success() {
+        let (world, game_actions) = test_setup();
+        let host_addr = owner();
+        let player1_addr = player1();
+        let initial_time = 1000_u64;
+        testing::set_block_timestamp(initial_time);
+
+        // Setup: Create trivia, add questions, create game, players join
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME);
+        game_actions.add_question(trivia_id, Q2_TEXT, Q2_OPTIONS, Q2_ANSWER, Q2_TIME);
+        let game_id = game_actions.create_game(trivia_id);
+        testing::set_contract_address(player1_addr);
+        game_actions.join_game(game_id);
+
+        // --- Start Game (Success) ---
+        testing::set_contract_address(host_addr);
+        game_actions.start_game(game_id);
+
+        // Verify Game state
+        let game: Game = world.read_model((game_id,));
+        assert_eq!(game.status, GameStatus::InProgress);
+        assert_eq!(game.current_question, 1);
+        assert_eq!(game.timer_end, initial_time + Q1_TIME.into());
+    }
+
+    #[test]
+    #[available_gas(3000000000)]
+    #[should_panic(expected: ('Unauthorized', 'ENTRYPOINT_FAILED'))]
+    fn test_unauthorized_start_game_failure() {
+        let (_, game_actions) = test_setup();
+        let host_addr = owner();
+        let player1_addr = player1();
+        let initial_time = 1000_u64;
+        testing::set_block_timestamp(initial_time);
+
+        // Setup: Create trivia, add questions, create game, players join
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME);
+        game_actions.add_question(trivia_id, Q2_TEXT, Q2_OPTIONS, Q2_ANSWER, Q2_TIME);
+        let game_id = game_actions.create_game(trivia_id);
+        testing::set_contract_address(player1_addr);
+        game_actions.join_game(game_id);
+
+        // --- Start Game (Success) ---
+        testing::set_contract_address(player1_addr);
+        game_actions.start_game(game_id);
+    }
+
+    #[test]
+    #[available_gas(3000000000)]
+    #[should_panic(expected: ('Invalid game status', 'ENTRYPOINT_FAILED'))]
+    fn test_start_game_invalid_status_fails() {
+        let (_, game_actions) = test_setup();
+        let host_addr = owner();
+        let player1_addr = player1();
+        let initial_time = 1000_u64;
+        testing::set_block_timestamp(initial_time);
+
+        // Setup: Create trivia, add questions, create game, players join
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME);
+        game_actions.add_question(trivia_id, Q2_TEXT, Q2_OPTIONS, Q2_ANSWER, Q2_TIME);
+        let game_id = game_actions.create_game(trivia_id);
+        testing::set_contract_address(player1_addr);
+        game_actions.join_game(game_id);
+
+        // --- Start Game (Success) ---
+        testing::set_contract_address(host_addr);
+        game_actions.start_game(game_id);
+
+        // --- Start Game again (Fails) ---
+        game_actions.start_game(game_id);
+    }
+
+    #[test]
+    #[available_gas(3000000000)]
+    #[should_panic(expected: ('No questions', 'ENTRYPOINT_FAILED'))]
+    fn test_start_game_no_question_fails() {
+        let (_, game_actions) = test_setup();
+        let host_addr = owner();
+        let player1_addr = player1();
+        let initial_time = 1000_u64;
+        testing::set_block_timestamp(initial_time);
+
+        // Setup: Create trivia, add questions, create game, players join
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        let game_id = game_actions.create_game(trivia_id);
+        testing::set_contract_address(player1_addr);
+        game_actions.join_game(game_id);
+
+        // --- Start Game (Fails) ---
+        testing::set_contract_address(host_addr);
+        game_actions.start_game(game_id);
+    }
+
+    #[test]
+    #[available_gas(3000000000)]
+    #[should_panic(expected: ('No players', 'ENTRYPOINT_FAILED'))]
+    fn test_start_game_no_player_fails() {
+        let (_, game_actions) = test_setup();
+        let host_addr = owner();
+
+        let initial_time = 1000_u64;
+        testing::set_block_timestamp(initial_time);
+
+        // Setup: Create trivia, add questions, create game, players join
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME);
+        game_actions.add_question(trivia_id, Q2_TEXT, Q2_OPTIONS, Q2_ANSWER, Q2_TIME);
+        let game_id = game_actions.create_game(trivia_id);
+
+        // --- Start Game (Success) ---
+        testing::set_contract_address(host_addr);
+        game_actions.start_game(game_id);
+    }
 }

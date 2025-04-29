@@ -7,3 +7,4 @@ pub const NO_QUESTIONS: felt252 = 'No questions';
 pub const TIME_EXPIRED: felt252 = 'Time expired';
 pub const NOT_IN_GAME: felt252 = 'Not in game';
 pub const ALREADY_ANSWERED: felt252 = 'Already answered';
+pub const NO_PLAYERS: felt252 = 'No players';
