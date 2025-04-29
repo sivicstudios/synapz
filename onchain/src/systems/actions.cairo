@@ -237,53 +237,53 @@ pub mod actions {
         /// - `ALREADY_IN_GAME`: If the calling player's address is already associated with a
         ///   `Player` model in the specified `game_id`.
         fn join_game(ref self: ContractState, game_id: u64) {
-                    // Obtain a mutable reference to the contract's default world state.
-                    let mut world = self.world_default();
-                    // Retrieve the address of the user who is calling this function. This is the player
-                    // joining the game.
-                    let caller = get_caller_address();
-        
-                    // Read the `Game` model using the provided `game_id`.
-                    let mut game: Game = world.read_model(game_id);
-                    // Assert that the game's status is `Lobby`, meaning it's open for players to join.
-                    assert(game.status == GameStatus::Lobby, NOT_IN_LOBBY);
-        
-                    // Attempt to read a `Player` model for the calling address within the specified game.
-                    // If a player model exists with a non-zero `last_answer_time`, it means the player has
-                    // already joined.
-                    let player: Player = world.read_model((game_id, caller));
-                    assert(player.last_answer_time == 0, ALREADY_IN_GAME);
-        
-                    // Create a new `Player` model for the joining player and persist it to the world state.
-                    world
-                        .write_model(
-                            @Player {
-                                game_id,
-                                player_address: caller,
-                                score: 0,
-                                streak: 0,
-                                last_answer_time: get_block_timestamp(),
-                            },
-                        );
-        
-                    // Increment the player count in the `Game` model.
-                    game.player_count += 1;
-                    // Update the `Game` model in the world state with the new player count.
-                    world.write_model(@game);
-                    // Create a `PlayerBoard` entry to track the order of players.
-                    world
-                        .write_model(
-                            @PlayerBoard { game_id, player_id: game.player_count, player: caller },
-                        );
-        
-                    // Emit an event to signal that a player has joined the game.
-                    world
-                        .emit_event(
-                            @PlayerJoined {
-                                game_id, player_address: caller, timestamp: get_block_timestamp(),
-                            },
-                        );
-                }
+            // Obtain a mutable reference to the contract's default world state.
+            let mut world = self.world_default();
+            // Retrieve the address of the user who is calling this function. This is the player
+            // joining the game.
+            let caller = get_caller_address();
+
+            // Read the `Game` model using the provided `game_id`.
+            let mut game: Game = world.read_model(game_id);
+            // Assert that the game's status is `Lobby`, meaning it's open for players to join.
+            assert(game.status == GameStatus::Lobby, NOT_IN_LOBBY);
+
+            // Attempt to read a `Player` model for the calling address within the specified game.
+            // If a player model exists with a non-zero `last_answer_time`, it means the player has
+            // already joined.
+            let player: Player = world.read_model((game_id, caller));
+            assert(player.last_answer_time == 0, ALREADY_IN_GAME);
+
+            // Create a new `Player` model for the joining player and persist it to the world state.
+            world
+                .write_model(
+                    @Player {
+                        game_id,
+                        player_address: caller,
+                        score: 0,
+                        streak: 0,
+                        last_answer_time: get_block_timestamp(),
+                    },
+                );
+
+            // Increment the player count in the `Game` model.
+            game.player_count += 1;
+            // Update the `Game` model in the world state with the new player count.
+            world.write_model(@game);
+            // Create a `PlayerBoard` entry to track the order of players.
+            world
+                .write_model(
+                    @PlayerBoard { game_id, player_id: game.player_count, player: caller },
+                );
+
+            // Emit an event to signal that a player has joined the game.
+            world
+                .emit_event(
+                    @PlayerJoined {
+                        game_id, player_address: caller, timestamp: get_block_timestamp(),
+                    },
+                );
+        }
 
         /// Starts a trivia game session.
         ///
@@ -549,34 +549,43 @@ pub mod actions {
         ///   `InProgress` state.
         /// - `UNAUTHORIZED`: If the caller is neither the game host nor is the current block
         ///   timestamp after the `timer_end` of the current question.
-        fn next_question(
-            ref self: ContractState, game_id: u64,
-        ) { // Obtain a mutable reference to the contract's default world state.
-        // Retrieve the address of the user who is calling this function.
+        fn next_question(ref self: ContractState, game_id: u64) {
+            // Obtain a mutable reference to the contract's default world state.
+            let mut world = self.world_default();
+            // Retrieve the address of the user who is calling this function.
+            let caller = get_caller_address();
 
-        // Read the `Game` model using the provided `game_id`.
+            // Read the `Game` model using the provided `game_id`.
+            let mut game: Game = world.read_model(game_id);
+            // Assert that the game is currently in the `InProgress` state.
+            assert(game.status == GameStatus::InProgress, INVALID_GAME_STATUS);
+            // Assert that either the caller is the host or the time for the current question has
+            // expired.
+            assert(caller == game.host || get_block_timestamp() > game.timer_end, UNAUTHORIZED);
 
-        // Assert that the game is currently in the `InProgress` state.
-
-        // Assert that either the caller is the host or the time for the current question has
-        // expired.
-
-        // Read the `TriviaInfo` model to get the total number of questions.
-
-        // Check if all questions have been presented.
-
-        // If so, end the game.
-
-        // Otherwise, advance to the next question.
-
-        // Read the next question.
-
-        // Set the timer for the next question.
-
-        // Emit an event indicating the next question.
-
-        // Update the `Game` model in the world state.
-
+            // Read the `TriviaInfo` model to get the total number of questions.
+            let trivia_info: TriviaInfo = world.read_model(game.trivia_id);
+            // Check if all questions have been presented.
+            if game.current_question >= trivia_info.question_count {
+                // If so, end the game.
+                game.status = GameStatus::Ended;
+                game.timer_end = 0;
+                world.emit_event(@GameEnded { game_id, timestamp: get_block_timestamp() });
+            } else {
+                // Otherwise, advance to the next question.
+                game.current_question += 1;
+                // Read the next question.
+                let question: Question = world.read_model((game.trivia_id, game.current_question));
+                // Set the timer for the next question.
+                game.timer_end = get_block_timestamp() + question.time_limit.into();
+            }
+            // Emit an event indicating the next question.
+            world
+                .emit_event(
+                    @NextQuestion { current_question_index: game.current_question.into(), game_id },
+                );
+            // Update the `Game` model in the world state.
+            world.write_model(@game);
         }
 
         /// Retrieves the current leaderboard for a specific trivia game.

@@ -574,6 +574,7 @@ mod tests {
         // Verify TriviaInfo update
         let trivia_info: TriviaInfo = world.read_model(trivia_id);
         assert_eq!(trivia_info.question_count, 1);
+
     }
 
     #[test]
@@ -593,5 +594,131 @@ mod tests {
         game_actions
             .add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME); // Should panic
     }
+    
+    // Test `next_question`
+    #[test]
+    #[available_gas(3000000000)]
+    fn test_next_question_success() {
+        let (world, game_actions) = test_setup();
+        let host_addr = owner();
+        let player1_addr = player1();
+        let start_time = 1000_u64;
 
+        // Setup: trivia, 2 questions, game, 1 player, start game
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME); // Q1
+        game_actions.add_question(trivia_id, Q2_TEXT, Q2_OPTIONS, Q2_ANSWER, Q2_TIME); // Q2
+        let game_id = game_actions.create_game(trivia_id);
+        testing::set_contract_address(player1_addr);
+        game_actions.join_game(game_id);
+        testing::set_block_timestamp(start_time);
+        testing::set_contract_address(host_addr);
+        game_actions.start_game(game_id);
+
+        // --- Advance by Host Before Timer (Success) ---
+        let host_advance_time = start_time + 10;
+        testing::set_block_timestamp(host_advance_time);
+        testing::set_contract_address(host_addr);
+        game_actions.next_question(game_id);
+
+        // Verify game state advanced to Q2
+        let game: Game = world.read_model((game_id,));
+        assert_eq!(game.current_question, 2);
+        assert_eq!(game.status, GameStatus::InProgress);
+        let expected_q2_timer_end = host_advance_time + Q2_TIME.into();
+        assert_eq!(game.timer_end, expected_q2_timer_end);
+
+        // --- Advance by Timer (Success) ---
+        // Need to submit an answer first to reset player state for Q2 if needed,
+        // but advancing doesn't strictly require it.
+        let timer_advance_time = expected_q2_timer_end + 1;
+        testing::set_block_timestamp(timer_advance_time);
+        // Call next_question as anyone (e.g., player1) - timer condition should allow it
+        testing::set_contract_address(player1_addr);
+        game_actions.next_question(game_id);
+
+        // Verify game ended (since only 2 questions)
+        let game: Game = world.read_model((game_id,));
+        assert_eq!(game.status, GameStatus::Ended);
+        assert_eq!(game.timer_end, 0);
+    }
+
+    #[should_panic(expected: ('Invalid game status', 'ENTRYPOINT_FAILED'))]
+    fn test_next_question_invalid_status() {
+        let (world, game_actions) = test_setup();
+        let host_addr = owner();
+        let player1_addr = player1();
+        let start_time = 1000_u64;
+
+        // Setup: trivia, 2 questions, game, 1 player, start game
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME); // Q1
+        game_actions.add_question(trivia_id, Q2_TEXT, Q2_OPTIONS, Q2_ANSWER, Q2_TIME); // Q2
+        let game_id = game_actions.create_game(trivia_id);
+        testing::set_contract_address(player1_addr);
+        game_actions.join_game(game_id);
+        testing::set_block_timestamp(start_time);
+        testing::set_contract_address(host_addr);
+        game_actions.start_game(game_id);
+
+        // --- Advance by Host Before Timer (Success) ---
+        let host_advance_time = start_time + 10;
+        testing::set_block_timestamp(host_advance_time);
+        testing::set_contract_address(host_addr);
+        game_actions.next_question(game_id);
+
+        // Verify game state advanced to Q2
+        let game: Game = world.read_model((game_id,));
+        assert_eq!(game.current_question, 2);
+        assert_eq!(game.status, GameStatus::InProgress);
+        let expected_q2_timer_end = host_advance_time + Q2_TIME.into();
+        assert_eq!(game.timer_end, expected_q2_timer_end);
+
+        // --- Advance by Timer (Success) ---
+        // Need to submit an answer first to reset player state for Q2 if needed,
+        // but advancing doesn't strictly require it.
+        let timer_advance_time = expected_q2_timer_end + 1;
+        testing::set_block_timestamp(timer_advance_time);
+        // Call next_question as anyone (e.g., player1) - timer condition should allow it
+        testing::set_contract_address(player1_addr);
+        game_actions.next_question(game_id);
+
+        // Verify game ended (since only 2 questions)
+        let game: Game = world.read_model((game_id,));
+        assert_eq!(game.status, GameStatus::Ended);
+        assert_eq!(game.timer_end, 0);
+
+        testing::set_contract_address(host_addr);
+        game_actions.next_question(game_id);
+    }
+
+    #[test]
+    #[available_gas(3000000000)]
+    #[should_panic(expected: ('Unauthorized', 'ENTRYPOINT_FAILED'))]
+    fn test_next_question_unauthorized() {
+        let (world, game_actions) = test_setup();
+        let host_addr = owner();
+        let player1_addr = player1();
+        let start_time = 1000_u64;
+
+        // Setup: trivia, 2 questions, game, 1 player, start game
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME); // Q1
+        game_actions.add_question(trivia_id, Q2_TEXT, Q2_OPTIONS, Q2_ANSWER, Q2_TIME); // Q2
+        let game_id = game_actions.create_game(trivia_id);
+        testing::set_contract_address(player1_addr);
+        game_actions.join_game(game_id);
+        testing::set_block_timestamp(start_time);
+        testing::set_contract_address(host_addr);
+        game_actions.start_game(game_id);
+
+        // --- Advance by Player Before Timer (Fails) ---
+        let host_advance_time = start_time + 10;
+        testing::set_block_timestamp(host_advance_time);
+        testing::set_contract_address(player1_addr);
+        game_actions.next_question(game_id);
+    }
 }
