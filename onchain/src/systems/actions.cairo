@@ -14,7 +14,7 @@ pub mod actions {
     };
     use synapz::errors::shared::{
         NOT_IN_GAME, ALREADY_ANSWERED, ALREADY_IN_GAME, NO_QUESTIONS, INVALID_GAME_STATUS,
-        NOT_IN_LOBBY, TIME_EXPIRED, UNAUTHORIZED, NO_PLAYERS,
+        NOT_IN_LOBBY, TIME_EXPIRED, UNAUTHORIZED,
     };
 
     #[abi(embed_v0)]
