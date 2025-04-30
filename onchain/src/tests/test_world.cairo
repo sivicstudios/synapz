@@ -721,4 +721,25 @@ mod tests {
         testing::set_contract_address(player1_addr);
         game_actions.next_question(game_id);
     }
+
+    #[test]
+    #[available_gas(3000000000)]
+    fn test_create_trivia_success() {
+        let (world, game_actions) = test_setup();
+        let host_addr = owner();
+        testing::set_contract_address(host_addr);
+
+        let trivia_id = game_actions.create_trivia();
+        assert_eq!(trivia_id, 1);
+
+        // Verify Trivia model
+        let trivia: Trivia = world.read_model(trivia_id);
+        assert_eq!(trivia.trivia_id, trivia_id);
+        assert_eq!(trivia.owner, host_addr);
+
+        // Verify TriviaInfo model
+        let trivia_info: TriviaInfo = world.read_model(trivia_id);
+        assert_eq!(trivia_info.trivia_id, trivia_id);
+        assert_eq!(trivia_info.question_count, 0);
+    }
 }
