@@ -38,27 +38,34 @@ pub mod actions {
         /// The unique identifier (`u64`) assigned to the newly created trivia game. This ID can be
         /// used to reference and interact with this specific trivia instance in subsequent
         /// operations.
-        fn create_trivia(
-            ref self: ContractState,
-        ) -> u64 { // Obtain a mutable reference to the contract's default world state.
+        fn create_trivia(ref self: ContractState) -> u64 {
+            // Obtain a mutable reference to the contract's default world state.
+            let mut world = self.world_default();
             // Retrieve the address of the user who is calling this function. This address will be
             // the owner of the new trivia game.
+            let caller = get_caller_address();
 
             // Generate a unique identifier for this new trivia game. This uses a contract-level
             // resource counter to ensure that each trivia game has a distinct ID.
+            let trivia_id = self.resource_uid('trivia_counter');
 
             // Create the core `Trivia` data model and persist it to the world state.
             // This model stores fundamental information about the trivia game.
-
+            world.write_model(@Trivia { trivia_id, owner: caller });
             // Create the `TriviaInfo` data model and persist it.
             // This model holds additional information, such as the number of questions currently
             // associated with the trivia (initially 0).
+            world.write_model(@TriviaInfo { trivia_id, question_count: 0 });
 
             // Emit an event to signal that a new trivia game has been successfully created.
             // This event includes important details about the new game.
+            world
+                .emit_event(
+                    @TriviaCreated { trivia_id, host: caller, timestamp: get_block_timestamp() },
+                );
 
             // Return the unique identifier of the newly created trivia game.
-            0
+            trivia_id
         }
 
         /// Adds a new question to an existing trivia game.
