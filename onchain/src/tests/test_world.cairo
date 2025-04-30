@@ -574,7 +574,6 @@ mod tests {
         // Verify TriviaInfo update
         let trivia_info: TriviaInfo = world.read_model(trivia_id);
         assert_eq!(trivia_info.question_count, 1);
-
     }
 
     #[test]
@@ -594,7 +593,7 @@ mod tests {
         game_actions
             .add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME); // Should panic
     }
-    
+
     // Test `next_question`
     #[test]
     #[available_gas(3000000000)]
@@ -741,5 +740,67 @@ mod tests {
         let trivia_info: TriviaInfo = world.read_model(trivia_id);
         assert_eq!(trivia_info.trivia_id, trivia_id);
         assert_eq!(trivia_info.question_count, 0);
+    }
+
+    // Test View Leaderboard
+    #[test]
+    #[available_gas(3000000000)]
+    fn test_view_leader_board() {
+        let (world, game_actions) = test_setup();
+        let host_addr = owner();
+        let player1_addr = player1();
+        let player2_addr = player2();
+        let start_time = 1000_u64;
+
+        // Setup: trivia, Q1, game, 2 players, start, p1 answers correctly, p2 incorrectly
+        testing::set_contract_address(host_addr);
+        let trivia_id = game_actions.create_trivia();
+        game_actions.add_question(trivia_id, Q1_TEXT, Q1_OPTIONS, Q1_ANSWER, Q1_TIME);
+        let game_id = game_actions.create_game(trivia_id);
+
+        testing::set_block_timestamp(start_time);
+        testing::set_contract_address(player1_addr);
+        game_actions.join_game(game_id);
+        testing::set_contract_address(player2_addr);
+        game_actions.join_game(game_id);
+
+        testing::set_contract_address(host_addr);
+        game_actions.start_game(game_id);
+        let q1_timer_end = start_time + Q1_TIME.into();
+
+        // Player 1 answers correctly (quickly)
+        let p1_submit_time = start_time + 2;
+        testing::set_block_timestamp(p1_submit_time);
+        testing::set_contract_address(player1_addr);
+        game_actions.submit_answer(game_id, Q1_ANSWER);
+        let p1_time_bonus = (q1_timer_end - p1_submit_time) * 10;
+        let p1_expected_score: u32 = (100 + p1_time_bonus).try_into().unwrap();
+
+        // Player 2 answers incorrectly
+        let p2_submit_time = start_time + 5;
+        testing::set_block_timestamp(p2_submit_time);
+        testing::set_contract_address(player2_addr);
+        let incorrect_answer = (Q1_ANSWER + 1) % 3;
+        game_actions.submit_answer(game_id, incorrect_answer);
+        let p2_expected_score: u32 = 0;
+
+        // --- View Leaderboard ---
+        let p1_model: Player = world.read_model((game_id, player1_addr));
+        let p2_model: Player = world.read_model((game_id, player2_addr));
+
+        assert_eq!(p1_model.score, p1_expected_score);
+        assert_eq!(p2_model.score, p2_expected_score);
+
+        // The `view_leader_board` function iterates based on PlayerBoard.
+        let board_p1: PlayerBoard = world.read_model((game_id, 1_u32));
+        let board_p2: PlayerBoard = world.read_model((game_id, 2_u32));
+        assert_eq!(board_p1.player, player1_addr);
+        assert_eq!(board_p2.player, player2_addr);
+
+        // expected
+        let leaderboard = game_actions.view_leader_board(game_id);
+        assert_eq!(leaderboard.len(), 2);
+        assert_eq!(*leaderboard.at(0), (player1_addr, p1_expected_score));
+        assert_eq!(*leaderboard.at(1), (player2_addr, p2_expected_score));
     }
 }
