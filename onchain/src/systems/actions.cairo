@@ -110,8 +110,8 @@ pub mod actions {
             options: felt252,
             correct_answer: u8,
             time_limit: u8,
-        ) { 
-        // Obtain a mutable reference to the contract's default world state.
+        ) {
+            // Obtain a mutable reference to the contract's default world state.
             let mut world = self.world_default();
             // Retrieve the address of the user who is calling this function.
             let caller = get_caller_address();
@@ -625,26 +625,28 @@ pub mod actions {
         /// A `Span` of tuples, where each tuple contains:
         /// - The `ContractAddress` of a player in the game.
         /// - The player's current score (`u32`).
-        fn view_leader_board(
-            self: @ContractState, game_id: u64,
-        ) -> Span<
-            (ContractAddress, u32),
-        > { // Obtain a read-only reference to the contract's default world state.
+        fn view_leader_board(self: @ContractState, game_id: u64) -> Span<(ContractAddress, u32)> {
+            // Obtain a read-only reference to the contract's default world state.
+            let world = self.world_default();
             // Read the `Game` model to get the number of players in the game.
+            let game: Game = world.read_model(game_id);
 
             // Initialize an empty array to store player addresses and their scores.
+            let mut scores: Array<(ContractAddress, u32)> = array![];
 
             // Iterate through each player in the game, based on the player count.
-
-            // Read the `PlayerBoard` model to get the address of the player with the current
-            // ID.
-
-            // Read the `Player` model to get the player's score.
-
-            // Append the player's address and score to the `scores` array.
+            for i in 1..game.player_count + 1 {
+                // Read the `PlayerBoard` model to get the address of the player with the current
+                // ID.
+                let player_board: PlayerBoard = world.read_model((game_id, i));
+                // Read the `Player` model to get the player's score.
+                let player: Player = world.read_model((game_id, player_board.player));
+                // Append the player's address and score to the `scores` array.
+                scores.append((player.player_address, player.score));
+            };
 
             // Convert the `scores` array into a `Span` for returning.
-            array![(get_caller_address(), 0)].span()
+            scores.span()
         }
     }
 
