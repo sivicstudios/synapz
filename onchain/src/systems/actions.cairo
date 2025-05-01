@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #[dojo::contract]
 pub mod actions {
     use dojo::event::EventStorage;
@@ -180,6 +181,8 @@ pub mod actions {
         /// The unique identifier (`u64`) assigned to the newly created game session. This ID is
         /// used for players to join and interact with this specific game.
 
+=======
+>>>>>>> 75b56d486728905ca3501d207f2aae40f8f018f6
 fn create_game(ref self: ContractState, trivia_id: u64) -> u64 {
             // Obtain a mutable reference to the contract's default world state.
             let mut world = self.world_default();
@@ -221,6 +224,7 @@ fn create_game(ref self: ContractState, trivia_id: u64) -> u64 {
             // Return the unique identifier of the newly created game session.
             game_id
         }
+<<<<<<< HEAD
 /// Allows a user to join an existing trivia game that is in the lobby state.
         ///
         /// This function enables a player to join a specific game session identified by `game_id`.
@@ -713,3 +717,5 @@ fn create_game(ref self: ContractState, trivia_id: u64) -> u64 {
         }
     }
 }
+=======
+>>>>>>> 75b56d486728905ca3501d207f2aae40f8f018f6
