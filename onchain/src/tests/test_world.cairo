@@ -805,9 +805,6 @@ mod tests {
         assert_eq!(*leaderboard.at(1), (player2_addr, p2_expected_score));
     }
 }
-
-=======
->>>>>>> 75b56d486728905ca3501d207f2aae40f8f018f6
 #[test]
     #[available_gas(3000000000)]
     fn test_create_game_success() {
