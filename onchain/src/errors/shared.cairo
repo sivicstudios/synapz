@@ -1,0 +1,10 @@
+pub const GAME_INACTIVE: felt252 = 'Game inactive';
+pub const UNAUTHORIZED: felt252 = 'Unauthorized';
+pub const NOT_IN_LOBBY: felt252 = 'Not in lobby';
+pub const ALREADY_IN_GAME: felt252 = 'Already in game';
+pub const INVALID_GAME_STATUS: felt252 = 'Invalid game status';
+pub const NO_QUESTIONS: felt252 = 'No questions';
+pub const TIME_EXPIRED: felt252 = 'Time expired';
+pub const NOT_IN_GAME: felt252 = 'Not in game';
+pub const ALREADY_ANSWERED: felt252 = 'Already answered';
+pub const NO_PLAYERS: felt252 = 'No players';
