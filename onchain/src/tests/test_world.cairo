@@ -804,7 +804,6 @@ mod tests {
         assert_eq!(*leaderboard.at(0), (player1_addr, p1_expected_score));
         assert_eq!(*leaderboard.at(1), (player2_addr, p2_expected_score));
     }
-}
 #[test]
     #[available_gas(3000000000)]
     fn test_create_game_success() {
@@ -846,3 +845,4 @@ mod tests {
         testing::set_contract_address(other_addr);
         game_actions.create_game(trivia_id);
     }
+}
