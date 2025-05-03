@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #[cfg(test)]
 mod tests {
     use core::starknet::ContractAddress;
